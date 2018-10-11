@@ -8,6 +8,17 @@ public class jump : MonoBehaviour {
 	public Material wall_mat;
 	public Material wall_mat2;
 
+	private int zCounter = 50;
+	private int obstacle_interval = 50;
+	private int sidewaysForce = 400;
+
+	// next steps: 
+//	add fog of war, 
+//	add score (how to determine whether player went through?), 
+//	procedurally generate new hoops as player progresses. 
+//	Perhaps let x position of the hoops vary.
+
+
 	void Start () {
 		createHoop (10, 10, 70);
 		createHoop (7, 5, 100);
@@ -19,6 +30,17 @@ public class jump : MonoBehaviour {
 		createHoop (11, 4, 280);
 		createHoop (15, 6, 310);
 		createHoop (9, 3, 340);
+
+		createHoop (8, 4, 380);
+		createHoop (5, 5, 410);
+		createHoop (3, 4, 440);
+		createHoop (7, 6, 470);
+//		createHoop (9, 3, 500);
+//		createHoop (12, 4, 530);
+
+//		Debug.Log (Random.Range(1, 100));
+
+		rb.AddForce (0, 0, 20, ForceMode.VelocityChange);
 	}
 	
 	void FixedUpdate () {
@@ -28,6 +50,31 @@ public class jump : MonoBehaviour {
 		if (Input.GetKey ("d")) {
 			rb.AddForce (0, -300, 0);
 		}
+
+		// Horizontal forces:
+		if (Input.GetKey ("a")) {
+			rb.AddForce (- sidewaysForce, 0, 0);
+		}
+		if (Input.GetKey ("f")) {
+			rb.AddForce (sidewaysForce, 0, 0);
+		}
+
+
+		// Ahh, z is changing in much too coarse-grained a way for this to work:
+//		if (rb.transform.position.z % 50 <= 0.1) {
+//			Debug.Log("got one boss!");
+//		}
+
+		if (rb.transform.position.z > zCounter) {
+			createHoop (Random.Range(3, 15), Random.Range(3, 9), zCounter + 500);
+			zCounter += obstacle_interval;
+
+			// Lame way to deal with accumulation of forward force:
+			if (zCounter > 500) {
+				obstacle_interval = 100;
+			}
+		}
+			
 
 		// Seems like we don't want the ForceMode.VelocityChange, which might be making the force addition cumulative?
 		rb.AddForce (0, 0, forwardForce);
