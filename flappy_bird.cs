@@ -5,6 +5,8 @@ public class jump : MonoBehaviour {
 
 	public Rigidbody rb; // refers to itself...Seems like should be implicit but whatever.
 	public int forwardForce = 35;
+	public Material wall_mat;
+	public Material wall_mat2;
 
 	void Start () {
 		createHoop (10, 10, 70);
@@ -37,9 +39,16 @@ public class jump : MonoBehaviour {
 		bar.transform.position = new Vector3 (x, y, z);
 
 		if (x != 0) {
-			bar.transform.localScale = new Vector3 (1, 2*r, 1);
+			bar.transform.localScale = new Vector3 (1, 2 * r, 1);
 		} else {
 			bar.transform.localScale = new Vector3 (2 * r, 1, 1);
+		}
+
+		// Color it in (should really be on the hoop but eh..), alternating every other:
+		if (z % 4 == 0) {
+			bar.GetComponent<MeshRenderer> ().material = wall_mat;
+		} else {
+			bar.GetComponent<MeshRenderer> ().material = wall_mat2;
 		}
 	}
 
