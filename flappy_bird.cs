@@ -32,6 +32,11 @@ public class jump : MonoBehaviour {
 	public int totalScore = 0;
 	public string message = "Keep it up!";
 
+	// Listen for loss:
+	public bool lowVelocity = false;
+	public DateTime lowVelocityOneSecondTime;
+
+	// Hold all obstacles to check for through-hoop:
 	public List<int[]> all_obstacles = new List<int[]>();
 
 	// Note: need some way to End the game, ask if want to restart. Should listen for colliding to obstacles as well as missing them.
@@ -68,9 +73,41 @@ public class jump : MonoBehaviour {
 		} 
 	}
 
+	void OnCollisionEnter (Collision col) {
+		LoseGame ();
+	}
+
+	void LoseGame() {
+		message = "You screwed the pooch!";
+	}
+
+	// Oh wait haha, none of this should be needed if they just lose on collision or after missing a hoop.....Oh well, was instructive.
+	bool checkForLowVelocity() {
+		if (rb.velocity.z < 2) {
+			lowVelocityOneSecondTime = DateTime.Now.AddSeconds (1);
+			return true;
+		} else {
+			return false;
+		}
+	}
+
+	void checkForLoss() {
+		if (lowVelocity) {
+			if (DateTime.Compare(DateTime.Now, lowVelocityOneSecondTime) > 0){
+				LoseGame ();
+			}
+		}
+	}
 
 
 	void FixedUpdate () {
+		Debug.Log (rb.velocity.z);
+
+//		checkForLoss ();
+
+		if (!lowVelocity) {
+			lowVelocity = checkForLowVelocity ();
+		}
 
 		// Vertical forces:
 		if (Input.GetKey ("s")) {
@@ -124,7 +161,7 @@ public class jump : MonoBehaviour {
 		float diff = Math.Abs (y - py);
 
 		if (diff > (r + leeway)) {
-			message = "You screwed the pooch!";
+			LoseGame ();
 		}
 	}
 
