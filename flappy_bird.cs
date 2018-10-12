@@ -1,17 +1,29 @@
 
 using UnityEngine;
+using System.Collections.Generic; // need this to use Lists
+
 
 public class jump : MonoBehaviour {
 
 	public Rigidbody rb; // refers to itself...Seems like should be implicit but whatever.
 	public int forwardForce = 35;
-    public int sidewaysForce = 400;
+	public int sidewaysForce = 400;
+	public int starting_dist = 500;
 
 	public Material wall_mat;
 	public Material wall_mat2;
+	public Material coin_mat;
 
 	private int zCounter = 50;
 	public int obstacle_interval = 50;
+
+//	public int[] obstacle_ys = new int[]; // Oooh shit we have to declare its size upfront...
+	// Apparently the answer is to use List, to which we can add elements.
+	// Idea still is flawed [not "won't work"]: we want to check whether y value is within certain range IF .... what? Similar to problem we ran into with detecting WHEN to build a new obstacle.
+	// So how do we tell whether the player has passed through a hoop? 
+
+	public List<int> obstacle_ys = new List<int>();
+
 
 	void Start () {
 		createHoop (10, 10, 70);
@@ -32,12 +44,35 @@ public class jump : MonoBehaviour {
 //		createHoop (9, 3, 500);
 //		createHoop (12, 4, 530);
 
-//		Debug.Log (Random.Range(1, 100));
-
+		// Add an initial forward force to the player:
 		rb.AddForce (0, 0, 45, ForceMode.VelocityChange);
+
+		// Create the coins:
+		for (int i = starting_dist; i < starting_dist + 1000; i++) {
+			if (i % 15 == 0) {
+				createCoin (Random.Range(2, 18), i);
+			}
+
+		}
 	}
-	
+
+	// Taken from Unity-overflow, and works:
+	void OnCollisionEnter (Collision col)
+	{
+		if (col.gameObject.name == "coin")
+		{
+			Destroy(col.gameObject);
+		}
+	}
+
+
+
+
 	void FixedUpdate () {
+
+//		Debug.Log (obstacle_ys);
+
+		// Vertical forces:
 		if (Input.GetKey ("s")) {
 			rb.AddForce (0, 500, 0);
 		}
@@ -60,7 +95,7 @@ public class jump : MonoBehaviour {
 //		}
 
 		if (rb.transform.position.z > zCounter) {
-			createHoop (Random.Range(3, 15), Random.Range(3, 9), zCounter + 500);
+			createHoop (Random.Range(3, 15), Random.Range(3, 9), zCounter + starting_dist);
 			zCounter += obstacle_interval;
 
 			// Lame way to deal with accumulation of forward force:
@@ -95,6 +130,17 @@ public class jump : MonoBehaviour {
 	}
 
 
+	// Hmm, how do we ensure that collision doesn't affect the player's path?
+	// The tricky thng is we *don't* want to ignore the collision...
+	void createCoin(int y, int z) {
+		GameObject coin = GameObject.CreatePrimitive (PrimitiveType.Sphere);
+		coin.transform.position = new Vector3 (0, y, z);
+		coin.GetComponent<MeshRenderer> ().material = coin_mat;
+		coin.transform.localScale = new Vector3 (1, 1, 1);
+		coin.name = "coin"; // allowing for deletion upon collision
+	}
+
+
 	void createHoop (int y, int r, int z) {
 		// horizontal bars:
 		createBar (0, y + r, z, r);
@@ -103,6 +149,9 @@ public class jump : MonoBehaviour {
 		// vertical bars:
 		createBar (r, y, z, r);
 		createBar (-r, y, z, r);
+
+		// Add to list for checking:
+		obstacle_ys.Add(y);
 	}
 
 }
