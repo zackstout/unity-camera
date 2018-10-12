@@ -6,22 +6,25 @@ using System.Collections;
 
 public class jump : MonoBehaviour {
 	// Player control:
-	public Rigidbody rb; // refers to itself...Seems like should be implicit but whatever.
+	public Rigidbody rb; // refers to itself...
 	public int forwardForce = 35;
 	public int sidewaysForce = 400;
-	public int starting_dist = 500;
 
 	// Materials:
 	public Material wall_mat;
 	public Material wall_mat2;
 	public Material coin_mat;
 
-	// Generating the obstacles:
+	// Generating the obstacles and coins:
 	private int zCounter = 50;
 	public int obstacle_interval = 50;
+	public int obstacle_starting_dist = 500;
+	public int first_obstacle = 70;
+	public int coin_starting_dist = 50;
+	public int leeway = 2;
 
 	// Checking whether player went through the hoop:
-	public int pass_z = 550;
+	public int pass_z = 70; // huh why can't we reference that variable?
 	public int pass_y;
 	public int pass_r;
 
@@ -31,34 +34,26 @@ public class jump : MonoBehaviour {
 
 	public List<int[]> all_obstacles = new List<int[]>();
 
-
+	// Note: need some way to End the game, ask if want to restart. Should listen for colliding to obstacles as well as missing them.
 
 	void Start () {
-		// Well... at least a step above creating them manually in the GUI:
-		// Put em in a loop:
-		createHoop (10, 10, 70);
-		createHoop (7, 5, 100);
-		createHoop (12, 7, 130);
-		createHoop (8, 12, 160);
-		createHoop (9, 6, 190);
-		createHoop (10, 4, 220);
-		createHoop (8, 5, 250);
-		createHoop (11, 4, 280);
-		createHoop (15, 6, 310);
-		createHoop (9, 3, 340);
 
-		createHoop (8, 4, 380);
-		createHoop (5, 5, 410);
-		createHoop (3, 4, 440);
-		createHoop (7, 6, 470);
-//		createHoop (9, 3, 500);
-//		createHoop (12, 4, 530);
+		// Generate initial 15 obstacles:
+		for (int i = 0; i < 15; i++) {
+			int y = UnityEngine.Random.Range (3, 15);
+			int r = UnityEngine.Random.Range (3, 9);
+			int z = first_obstacle + i * 30;
+			createHoop (y, r, z);
+
+			int[] data = new int[] {y, r, z};
+			all_obstacles.Add (data);
+		}
 
 		// Add an initial forward force to the player:
 		rb.AddForce (0, 0, 45, ForceMode.VelocityChange);
 
 		// Create the coins:
-		for (int i = starting_dist; i < starting_dist + 1000; i++) {
+		for (int i = coin_starting_dist; i < coin_starting_dist + 1000; i++) {
 			if (i % 15 == 0) {
 				createCoin (UnityEngine.Random.Range(2, 18), i);
 			}
@@ -68,7 +63,6 @@ public class jump : MonoBehaviour {
 	void OnTriggerEnter (Collider col)
 	{
 		if (col.name == "coin") {
-//			Debug.Log ("got a coin");
 			Destroy (col.gameObject);
 			totalScore++;
 		} 
@@ -98,7 +92,7 @@ public class jump : MonoBehaviour {
 		if (rb.transform.position.z > zCounter) {
 			int y = UnityEngine.Random.Range (3, 15);
 			int r = UnityEngine.Random.Range (3, 9);
-			int z = (int) zCounter + starting_dist;
+			int z = (int) zCounter + obstacle_starting_dist;
 			createHoop (y, r, z); 
 
 			int[] data = new int[] {y, r, z};
@@ -107,7 +101,7 @@ public class jump : MonoBehaviour {
 			zCounter += obstacle_interval;
 		}
 
-
+		// Strictly speaking not needed -- could just do this in the following conditional:
 		if (all_obstacles.Count > 0) {
 			pass_y = all_obstacles [0] [0];
 			pass_r = all_obstacles [0] [1];
@@ -127,18 +121,11 @@ public class jump : MonoBehaviour {
 
 
 	void checkForPass(int y, int r, float py) {
-		Debug.Log ("checking for pass!");
-		Debug.Log ("y is " + y);
-		Debug.Log ("r is " + r);
-		Debug.Log ("py is " + py);
-
 		float diff = Math.Abs (y - py);
-		float allowed = Math.Abs (y - r);
 
-		if (diff > allowed) {
+		if (diff > (r + leeway)) {
 			message = "You screwed the pooch!";
 		}
-
 	}
 
 	// Takes in a positional height and a radius, and a z-position. x always 0 for hor-bars:
