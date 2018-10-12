@@ -18,8 +18,9 @@ public class jump : MonoBehaviour {
 	private int zCounter = 50;
 	public int obstacle_interval = 50;
 
-//	public int[] obstacle_ys = new int[]; // Oooh shit we have to declare its size upfront...
-	// Apparently the answer is to use List, to which we can add elements.
+	public int totalScore = 0;
+
+
 	// Idea still is flawed [not "won't work"]: we want to check whether y value is within certain range IF .... what? Similar to problem we ran into with detecting WHEN to build a new obstacle.
 	// So how do we tell whether the player has passed through a hoop? 
 
@@ -58,31 +59,20 @@ public class jump : MonoBehaviour {
 		}
 	}
 
-	// Taken from Unity-overflow; it works!:
 	void OnTriggerEnter (Collider col)
 	{
-//		Physics.IgnoreCollision(rb.collider, col); // an add-on
-//		Physics.IgnoreCollision(GetComponent<Collider>(), col.transform.GetComponent<Collider>()); // Well we needed `.transform` to get access to the Collider...But still not ignoring?? Yeah, adding `.gameObject` does not help... Would we seriously have to add `true`...?
-
-//		Debug.Log (col.gameObject.layer);
-//		Debug.Log (GetComponent<Collider>());
-
-
 
 		if (col.name == "coin") {
-			// YES, this works -- shoot, it overworks..:
-			// It seems that we destroy the first coin we hit, bounce of it, and then we ignore collisions with everything...
-//			Physics.IgnoreLayerCollision (col.gameObject.layer, rb.gameObject.layer);
+
 			Debug.Log ("got a coin");
 			Destroy (col.gameObject);
+			totalScore++;
 		} 
 	}
 
 
 
 	void FixedUpdate () {
-
-//		Debug.Log (obstacle_ys);
 
 		// Vertical forces:
 		if (Input.GetKey ("s")) {
@@ -100,26 +90,12 @@ public class jump : MonoBehaviour {
 			rb.AddForce (sidewaysForce, 0, 0);
 		}
 
-
-		// Ahh, z is changing in much too coarse-grained a way for this to work:
-//		if (rb.transform.position.z % 50 <= 0.1) {
-//			Debug.Log("got one boss!");
-//		}
-
 		if (rb.transform.position.z > zCounter) {
 			createHoop (Random.Range(3, 15), Random.Range(3, 9), zCounter + starting_dist);
 			zCounter += obstacle_interval;
 
-			// Lame way to deal with accumulation of forward force:
-//			if (zCounter > 500) {
-//				obstacle_interval = 100;
-//			}
-			// Better idea is to just stop adding force in the Update. could set velocity, or just start it with an initial forward force.
 		}
 			
-
-		// Seems like we don't want the ForceMode.VelocityChange, which might be making the force addition cumulative?
-//		rb.AddForce (0, 0, forwardForce);
 	}
 
 	// Takes in a positional height and a radius, and a z-position. x always 0 for hor-bars:
@@ -142,16 +118,11 @@ public class jump : MonoBehaviour {
 	}
 
 
-	// Hmm, how do we ensure that collision doesn't affect the player's path?
-	// The tricky thng is we *don't* want to ignore the collision...
 	void createCoin(int y, int z) {
 		GameObject coin = GameObject.CreatePrimitive (PrimitiveType.Sphere);
 
-		// How odd, this seems to work for every except the first coin we hit...
-
 		coin.transform.position = new Vector3 (0, y, z);
 		coin.GetComponent<MeshRenderer> ().material = coin_mat;
-		// Don't forget the f!!:
 		coin.transform.localScale = new Vector3 (1, 1, 0.2f); // Probably not necessary -- But this is good! We can flatten the coins this way!
 		coin.name = "coin"; // allowing for deletion upon collision
 
