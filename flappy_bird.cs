@@ -27,6 +27,7 @@ public class jump : MonoBehaviour {
 
 
 	void Start () {
+		// Well... at least a step about creating them manually in the GUI:
 		createHoop (10, 10, 70);
 		createHoop (7, 5, 100);
 		createHoop (12, 7, 130);
@@ -58,16 +59,23 @@ public class jump : MonoBehaviour {
 	}
 
 	// Taken from Unity-overflow; it works!:
-	void OnCollisionEnter (Collision col)
+	void OnTriggerEnter (Collider col)
 	{
 //		Physics.IgnoreCollision(rb.collider, col); // an add-on
-		Physics.IgnoreCollision(rb.GetComponent<Collider>(), col.gameObject.transform.GetComponent<Collider>()); // Well we needed `.transform` to get access to the Collider...But still not ignoring?? Yeah, adding `.gameObject` does not help...
+//		Physics.IgnoreCollision(GetComponent<Collider>(), col.transform.GetComponent<Collider>()); // Well we needed `.transform` to get access to the Collider...But still not ignoring?? Yeah, adding `.gameObject` does not help... Would we seriously have to add `true`...?
+
+//		Debug.Log (col.gameObject.layer);
+//		Debug.Log (GetComponent<Collider>());
 
 
-		if (col.gameObject.name == "coin")
-		{
-			Destroy(col.gameObject);
-		}
+
+		if (col.name == "coin") {
+			// YES, this works -- shoot, it overworks..:
+			// It seems that we destroy the first coin we hit, bounce of it, and then we ignore collisions with everything...
+//			Physics.IgnoreLayerCollision (col.gameObject.layer, rb.gameObject.layer);
+			Debug.Log ("got a coin");
+			Destroy (col.gameObject);
+		} 
 	}
 
 
@@ -138,11 +146,17 @@ public class jump : MonoBehaviour {
 	// The tricky thng is we *don't* want to ignore the collision...
 	void createCoin(int y, int z) {
 		GameObject coin = GameObject.CreatePrimitive (PrimitiveType.Sphere);
+
+		// How odd, this seems to work for every except the first coin we hit...
+
 		coin.transform.position = new Vector3 (0, y, z);
 		coin.GetComponent<MeshRenderer> ().material = coin_mat;
 		// Don't forget the f!!:
 		coin.transform.localScale = new Vector3 (1, 1, 0.2f); // Probably not necessary -- But this is good! We can flatten the coins this way!
 		coin.name = "coin"; // allowing for deletion upon collision
+
+		coin.GetComponent<Collider>().isTrigger = true;
+
 	}
 
 
