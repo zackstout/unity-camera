@@ -18,32 +18,41 @@ public class jump : MonoBehaviour {
 	private int zCounter = 50;
 	public int obstacle_interval = 50;
 
+
+	public int pass_z = 550;
+	public int pass_y;
+	public int pass_r;
+
 	public int totalScore = 0;
 
+	// This is embarrassing, to have two lists...:
+//	public List<int> obstacle_ys = new List<int>();
+//	public List<int> obstacle_zs = new List<int>();
 
-	// Idea still is flawed [not "won't work"]: we want to check whether y value is within certain range IF .... what? Similar to problem we ran into with detecting WHEN to build a new obstacle.
-	// So how do we tell whether the player has passed through a hoop? 
 
-	public List<int> obstacle_ys = new List<int>();
+	// NOTE: at some point we need to get a reference to this, after an element has been added to it.. -- can just do inside the Update
+	public List<int[]> all_obstacles = new List<int[]>();
+
 
 
 	void Start () {
-		// Well... at least a step about creating them manually in the GUI:
-		createHoop (10, 10, 70);
-		createHoop (7, 5, 100);
-		createHoop (12, 7, 130);
-		createHoop (8, 12, 160);
-		createHoop (9, 6, 190);
-		createHoop (10, 4, 220);
-		createHoop (8, 5, 250);
-		createHoop (11, 4, 280);
-		createHoop (15, 6, 310);
-		createHoop (9, 3, 340);
+		// Well... at least a step above creating them manually in the GUI:
+		// Put em in a loop:
+		createHoop (10, 10, 70, false);
+		createHoop (7, 5, 100, false);
+		createHoop (12, 7, 130, false);
+		createHoop (8, 12, 160, false);
+		createHoop (9, 6, 190, false);
+		createHoop (10, 4, 220, false);
+		createHoop (8, 5, 250, false);
+		createHoop (11, 4, 280, false);
+		createHoop (15, 6, 310, false);
+		createHoop (9, 3, 340, false);
 
-		createHoop (8, 4, 380);
-		createHoop (5, 5, 410);
-		createHoop (3, 4, 440);
-		createHoop (7, 6, 470);
+		createHoop (8, 4, 380, false);
+		createHoop (5, 5, 410, false);
+		createHoop (3, 4, 440, false);
+		createHoop (7, 6, 470, false);
 //		createHoop (9, 3, 500);
 //		createHoop (12, 4, 530);
 
@@ -55,16 +64,13 @@ public class jump : MonoBehaviour {
 			if (i % 15 == 0) {
 				createCoin (Random.Range(2, 18), i);
 			}
-
 		}
 	}
 
 	void OnTriggerEnter (Collider col)
 	{
-
 		if (col.name == "coin") {
-
-			Debug.Log ("got a coin");
+//			Debug.Log ("got a coin");
 			Destroy (col.gameObject);
 			totalScore++;
 		} 
@@ -90,12 +96,41 @@ public class jump : MonoBehaviour {
 			rb.AddForce (sidewaysForce, 0, 0);
 		}
 
+		// Create new obstacles:
 		if (rb.transform.position.z > zCounter) {
-			createHoop (Random.Range(3, 15), Random.Range(3, 9), zCounter + starting_dist);
+			createHoop (Random.Range(3, 15), Random.Range(3, 9), zCounter + starting_dist, true); 
 			zCounter += obstacle_interval;
 
 		}
+
+
+		if (all_obstacles.Count > 0) {
+			pass_y = all_obstacles [0] [0];
+			pass_r = all_obstacles [0] [1];
+			pass_z = all_obstacles [0] [2];
+		}
+
+
+
+		// So first one should appear at z=550. Then 600, etc.
+		// So first counter should be 550; once we get to like 560, need to check whether we're in the range of the FIRST element in our yList.
+		if (rb.transform.position.z > pass_z) {
+			checkForPass (pass_y, pass_r, rb.transform.position.y);
+			all_obstacles.RemoveAt (0);
+		}
+
+
+//		Debug.Log (obstacle_ys.Count);
+
+		if (all_obstacles.Count > 1) {
+			Debug.Log (all_obstacles [1][0]);
+		}
 			
+	}
+
+
+	void checkForPass(int y, int r, int py) {
+		Debug.Log ("checking for pass!");
 	}
 
 	// Takes in a positional height and a radius, and a z-position. x always 0 for hor-bars:
@@ -124,24 +159,34 @@ public class jump : MonoBehaviour {
 		coin.transform.position = new Vector3 (0, y, z);
 		coin.GetComponent<MeshRenderer> ().material = coin_mat;
 		coin.transform.localScale = new Vector3 (1, 1, 0.2f); // Probably not necessary -- But this is good! We can flatten the coins this way!
+		// For it to show up, we need some shading/lighting though.
 		coin.name = "coin"; // allowing for deletion upon collision
 
 		coin.GetComponent<Collider>().isTrigger = true;
-
 	}
 
 
-	void createHoop (int y, int r, int z) {
-		// horizontal bars:
+	void createHoop (int y, int r, int z, bool fromScript) {
+		// Horizontal bars:
 		createBar (0, y + r, z, r);
 		createBar (0, y - r, z, r);
 
-		// vertical bars:
+		// Vertical bars:
 		createBar (r, y, z, r);
 		createBar (-r, y, z, r);
 
-		// Add to list for checking:
-		obstacle_ys.Add(y);
-	}
+		// Add to list for checking whether user went through hoop:
+		// Main problem is going to be that user's height could be legitimately outside the range by the time the check occurs, but that would still trigger a Loss.
 
+
+		// We should just do this when we create the hoop, not inside this function, then don't need the bool.
+		if (fromScript) {
+
+			int[] data = new int[] {y, r, z};
+			all_obstacles.Add (data);
+			// Of course: Just push the whole Hoop...
+		}
+		// NOTE: This is going to add all the ones we manually positioned at the beginning! (Of which there are 15).
+		// Fixed that by wrapping in conditional.
+	}
 }
