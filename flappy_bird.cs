@@ -5,19 +5,13 @@ public class jump : MonoBehaviour {
 
 	public Rigidbody rb; // refers to itself...Seems like should be implicit but whatever.
 	public int forwardForce = 35;
+    public int sidewaysForce = 400;
+
 	public Material wall_mat;
 	public Material wall_mat2;
 
 	private int zCounter = 50;
-	private int obstacle_interval = 50;
-	private int sidewaysForce = 400;
-
-	// next steps: 
-//	add fog of war, 
-//	add score (how to determine whether player went through?), 
-//	procedurally generate new hoops as player progresses. 
-//	Perhaps let x position of the hoops vary.
-
+	public int obstacle_interval = 50;
 
 	void Start () {
 		createHoop (10, 10, 70);
@@ -40,7 +34,7 @@ public class jump : MonoBehaviour {
 
 //		Debug.Log (Random.Range(1, 100));
 
-		rb.AddForce (0, 0, 20, ForceMode.VelocityChange);
+		rb.AddForce (0, 0, 45, ForceMode.VelocityChange);
 	}
 	
 	void FixedUpdate () {
@@ -70,14 +64,15 @@ public class jump : MonoBehaviour {
 			zCounter += obstacle_interval;
 
 			// Lame way to deal with accumulation of forward force:
-			if (zCounter > 500) {
-				obstacle_interval = 100;
-			}
+//			if (zCounter > 500) {
+//				obstacle_interval = 100;
+//			}
+			// Better idea is to just stop adding force in the Update. could set velocity, or just start it with an initial forward force.
 		}
 			
 
 		// Seems like we don't want the ForceMode.VelocityChange, which might be making the force addition cumulative?
-		rb.AddForce (0, 0, forwardForce);
+//		rb.AddForce (0, 0, forwardForce);
 	}
 
 	// Takes in a positional height and a radius, and a z-position. x always 0 for hor-bars:
