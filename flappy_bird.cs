@@ -3,6 +3,8 @@ using System; // needed for Math
 using UnityEngine;
 using System.Collections.Generic; // need this to use Lists
 using System.Collections;
+using UnityEngine.SceneManagement;
+using UnityEngine.UI;
 
 public class jump : MonoBehaviour {
 	// Player control:
@@ -21,7 +23,7 @@ public class jump : MonoBehaviour {
 	public int obstacle_starting_dist = 500;
 	public int first_obstacle = 70;
 	public int coin_starting_dist = 50;
-	public int leeway = 2;
+	public int leeway = 1;
 
 	// Checking whether player went through the hoop:
 	public int pass_z = 70; // huh why can't we reference that variable?
@@ -39,7 +41,10 @@ public class jump : MonoBehaviour {
 	// Hold all obstacles to check for through-hoop:
 	public List<int[]> all_obstacles = new List<int[]>();
 
-	// Note: need some way to End the game, ask if want to restart. Should listen for colliding to obstacles as well as missing them.
+	// Button:
+	public GameObject button; // Ahhh Ok just needed to drag in reference to the button, duh.
+	// Not sure why it wasn't working with GetComponent or Find...
+
 
 	void Start () {
 
@@ -63,6 +68,9 @@ public class jump : MonoBehaviour {
 				createCoin (UnityEngine.Random.Range(2, 18), i);
 			}
 		}
+
+		// Hide restart button:
+		button.SetActive(false);   
 	}
 
 	void OnTriggerEnter (Collider col)
@@ -79,36 +87,16 @@ public class jump : MonoBehaviour {
 
 	void LoseGame() {
 		message = "You screwed the pooch!";
+		// Show restart button:
+		button.SetActive (true);
 	}
 
-	// Oh wait haha, none of this should be needed if they just lose on collision or after missing a hoop.....Oh well, was instructive.
-	bool checkForLowVelocity() {
-		if (rb.velocity.z < 2) {
-			lowVelocityOneSecondTime = DateTime.Now.AddSeconds (1);
-			return true;
-		} else {
-			return false;
-		}
+	// Needs to be public so that we can attach this script to the onClick.
+	public void restartGame() {
+		SceneManager.LoadScene(SceneManager.GetActiveScene().name); // loads current scene
 	}
 
-	void checkForLoss() {
-		if (lowVelocity) {
-			if (DateTime.Compare(DateTime.Now, lowVelocityOneSecondTime) > 0){
-				LoseGame ();
-			}
-		}
-	}
-
-
-	void FixedUpdate () {
-		Debug.Log (rb.velocity.z);
-
-//		checkForLoss ();
-
-		if (!lowVelocity) {
-			lowVelocity = checkForLowVelocity ();
-		}
-
+	void getUserInput() {
 		// Vertical forces:
 		if (Input.GetKey ("s")) {
 			rb.AddForce (0, 500, 0);
@@ -124,6 +112,12 @@ public class jump : MonoBehaviour {
 		if (Input.GetKey ("f")) {
 			rb.AddForce (sidewaysForce, 0, 0);
 		}
+	}
+
+
+	void FixedUpdate () {
+		
+		getUserInput ();
 
 		// Create new obstacles:
 		if (rb.transform.position.z > zCounter) {
@@ -145,15 +139,12 @@ public class jump : MonoBehaviour {
 			pass_z = all_obstacles [0] [2];
 		}
 
-
-		// So first one should appear at z=550. Then 600, etc.
 		// So first counter should be 550; once we get to like 560, need to check whether we're in the range of the FIRST element in our yList.
 		if (rb.transform.position.z > pass_z) {
 			checkForPass (pass_y, pass_r, rb.transform.position.y);
 			all_obstacles.RemoveAt (0);
 		}
 		// Main problem is going to be that user's height could be legitimately outside the range by the time the check occurs, but that would still trigger a Loss.
-
 	}
 
 
