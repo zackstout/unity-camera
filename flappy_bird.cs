@@ -1,6 +1,7 @@
 
 using UnityEngine;
 using System.Collections.Generic; // need this to use Lists
+using System.Collections;
 
 
 public class jump : MonoBehaviour {
@@ -56,15 +57,18 @@ public class jump : MonoBehaviour {
 		}
 	}
 
-	// Taken from Unity-overflow, and works:
+	// Taken from Unity-overflow; it works!:
 	void OnCollisionEnter (Collision col)
 	{
+//		Physics.IgnoreCollision(rb.collider, col); // an add-on
+		Physics.IgnoreCollision(rb.GetComponent<Collider>(), col.gameObject.transform.GetComponent<Collider>()); // Well we needed `.transform` to get access to the Collider...But still not ignoring?? Yeah, adding `.gameObject` does not help...
+
+
 		if (col.gameObject.name == "coin")
 		{
 			Destroy(col.gameObject);
 		}
 	}
-
 
 
 
@@ -136,7 +140,8 @@ public class jump : MonoBehaviour {
 		GameObject coin = GameObject.CreatePrimitive (PrimitiveType.Sphere);
 		coin.transform.position = new Vector3 (0, y, z);
 		coin.GetComponent<MeshRenderer> ().material = coin_mat;
-		coin.transform.localScale = new Vector3 (1, 1, 1);
+		// Don't forget the f!!:
+		coin.transform.localScale = new Vector3 (1, 1, 0.2f); // Probably not necessary -- But this is good! We can flatten the coins this way!
 		coin.name = "coin"; // allowing for deletion upon collision
 	}
 
