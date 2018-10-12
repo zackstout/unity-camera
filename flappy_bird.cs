@@ -1,36 +1,34 @@
 
+using System; // needed for Math
 using UnityEngine;
 using System.Collections.Generic; // need this to use Lists
 using System.Collections;
 
-
 public class jump : MonoBehaviour {
-
+	// Player control:
 	public Rigidbody rb; // refers to itself...Seems like should be implicit but whatever.
 	public int forwardForce = 35;
 	public int sidewaysForce = 400;
 	public int starting_dist = 500;
 
+	// Materials:
 	public Material wall_mat;
 	public Material wall_mat2;
 	public Material coin_mat;
 
+	// Generating the obstacles:
 	private int zCounter = 50;
 	public int obstacle_interval = 50;
 
-
+	// Checking whether player went through the hoop:
 	public int pass_z = 550;
 	public int pass_y;
 	public int pass_r;
 
+	// For text on the screen:
 	public int totalScore = 0;
+	public string message = "Keep it up!";
 
-	// This is embarrassing, to have two lists...:
-//	public List<int> obstacle_ys = new List<int>();
-//	public List<int> obstacle_zs = new List<int>();
-
-
-	// NOTE: at some point we need to get a reference to this, after an element has been added to it.. -- can just do inside the Update
 	public List<int[]> all_obstacles = new List<int[]>();
 
 
@@ -38,21 +36,21 @@ public class jump : MonoBehaviour {
 	void Start () {
 		// Well... at least a step above creating them manually in the GUI:
 		// Put em in a loop:
-		createHoop (10, 10, 70, false);
-		createHoop (7, 5, 100, false);
-		createHoop (12, 7, 130, false);
-		createHoop (8, 12, 160, false);
-		createHoop (9, 6, 190, false);
-		createHoop (10, 4, 220, false);
-		createHoop (8, 5, 250, false);
-		createHoop (11, 4, 280, false);
-		createHoop (15, 6, 310, false);
-		createHoop (9, 3, 340, false);
+		createHoop (10, 10, 70);
+		createHoop (7, 5, 100);
+		createHoop (12, 7, 130);
+		createHoop (8, 12, 160);
+		createHoop (9, 6, 190);
+		createHoop (10, 4, 220);
+		createHoop (8, 5, 250);
+		createHoop (11, 4, 280);
+		createHoop (15, 6, 310);
+		createHoop (9, 3, 340);
 
-		createHoop (8, 4, 380, false);
-		createHoop (5, 5, 410, false);
-		createHoop (3, 4, 440, false);
-		createHoop (7, 6, 470, false);
+		createHoop (8, 4, 380);
+		createHoop (5, 5, 410);
+		createHoop (3, 4, 440);
+		createHoop (7, 6, 470);
 //		createHoop (9, 3, 500);
 //		createHoop (12, 4, 530);
 
@@ -62,7 +60,7 @@ public class jump : MonoBehaviour {
 		// Create the coins:
 		for (int i = starting_dist; i < starting_dist + 1000; i++) {
 			if (i % 15 == 0) {
-				createCoin (Random.Range(2, 18), i);
+				createCoin (UnityEngine.Random.Range(2, 18), i);
 			}
 		}
 	}
@@ -98,9 +96,15 @@ public class jump : MonoBehaviour {
 
 		// Create new obstacles:
 		if (rb.transform.position.z > zCounter) {
-			createHoop (Random.Range(3, 15), Random.Range(3, 9), zCounter + starting_dist, true); 
-			zCounter += obstacle_interval;
+			int y = UnityEngine.Random.Range (3, 15);
+			int r = UnityEngine.Random.Range (3, 9);
+			int z = (int) zCounter + starting_dist;
+			createHoop (y, r, z); 
 
+			int[] data = new int[] {y, r, z};
+			all_obstacles.Add (data);
+
+			zCounter += obstacle_interval;
 		}
 
 
@@ -111,26 +115,30 @@ public class jump : MonoBehaviour {
 		}
 
 
-
 		// So first one should appear at z=550. Then 600, etc.
 		// So first counter should be 550; once we get to like 560, need to check whether we're in the range of the FIRST element in our yList.
 		if (rb.transform.position.z > pass_z) {
 			checkForPass (pass_y, pass_r, rb.transform.position.y);
 			all_obstacles.RemoveAt (0);
 		}
+		// Main problem is going to be that user's height could be legitimately outside the range by the time the check occurs, but that would still trigger a Loss.
 
-
-//		Debug.Log (obstacle_ys.Count);
-
-		if (all_obstacles.Count > 1) {
-			Debug.Log (all_obstacles [1][0]);
-		}
-			
 	}
 
 
-	void checkForPass(int y, int r, int py) {
+	void checkForPass(int y, int r, float py) {
 		Debug.Log ("checking for pass!");
+		Debug.Log ("y is " + y);
+		Debug.Log ("r is " + r);
+		Debug.Log ("py is " + py);
+
+		float diff = Math.Abs (y - py);
+		float allowed = Math.Abs (y - r);
+
+		if (diff > allowed) {
+			message = "You screwed the pooch!";
+		}
+
 	}
 
 	// Takes in a positional height and a radius, and a z-position. x always 0 for hor-bars:
@@ -166,7 +174,7 @@ public class jump : MonoBehaviour {
 	}
 
 
-	void createHoop (int y, int r, int z, bool fromScript) {
+	void createHoop (int y, int r, int z) {
 		// Horizontal bars:
 		createBar (0, y + r, z, r);
 		createBar (0, y - r, z, r);
@@ -174,19 +182,5 @@ public class jump : MonoBehaviour {
 		// Vertical bars:
 		createBar (r, y, z, r);
 		createBar (-r, y, z, r);
-
-		// Add to list for checking whether user went through hoop:
-		// Main problem is going to be that user's height could be legitimately outside the range by the time the check occurs, but that would still trigger a Loss.
-
-
-		// We should just do this when we create the hoop, not inside this function, then don't need the bool.
-		if (fromScript) {
-
-			int[] data = new int[] {y, r, z};
-			all_obstacles.Add (data);
-			// Of course: Just push the whole Hoop...
-		}
-		// NOTE: This is going to add all the ones we manually positioned at the beginning! (Of which there are 15).
-		// Fixed that by wrapping in conditional.
 	}
 }
